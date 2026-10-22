@@ -77,7 +77,15 @@ div[class*="st-key-asst_"] p { margin-bottom: 0.4rem; }
 }
 [data-testid="stChatInput"] textarea { background: #F0F2F6; border-radius: 8px; }
 [data-testid="stChatInput"] button { border: 1px solid #CFC8BC; background: #fff; }
-/* + (upload) and send arrow: black and bold */
+/* + (upload) and send arrow: black, bold, white background */
+[data-testid="stChatInput"] button,
+[data-testid="stChatInput"] button:hover,
+[data-testid="stChatInput"] button:focus,
+[data-testid="stChatInput"] button:active,
+[data-testid="stChatInput"] button:disabled {
+    background: #fff !important; background-color: #fff !important;
+    border: 1.5px solid #000 !important; border-radius: 8px !important;
+}
 [data-testid="stChatInput"] button,
 [data-testid="stChatInput"] button * {
     color: #000 !important; fill: #000 !important; opacity: 1 !important;
