@@ -14,7 +14,7 @@ from ai_engineer_agent import (
 )
 
 st.set_page_config(
-    page_title="AI Mentor",
+    page_title="Career Mentor",
     page_icon="🧭",
     layout="centered",
     initial_sidebar_state="collapsed",  # keeps the main page clean, like DS Mentor
