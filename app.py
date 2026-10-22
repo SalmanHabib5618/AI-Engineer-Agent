@@ -14,7 +14,7 @@ from ai_engineer_agent import (
 )
 
 st.set_page_config(
-    page_title=" Mentor",
+    page_title="AI Mentor",
     page_icon="🧭",
     layout="centered",
     initial_sidebar_state="collapsed",  # keeps the main page clean, like DS Mentor
@@ -76,8 +76,7 @@ div[class*="st-key-asst_"] p { margin-bottom: 0.4rem; }
     background: #fff; border: 1px solid var(--line); border-radius: 10px;
 }
 [data-testid="stChatInput"] textarea { background: #F0F2F6; border-radius: 8px; }
-[data-testid="stChatInput"] button { border: 1px solid #CFC8BC; background: #fff; }
-/* + (upload) and send arrow: black, white background */
+/* + (upload) and send arrow: black icons, bold, white background */
 [data-testid="stChatInput"] button,
 [data-testid="stChatInput"] button:hover,
 [data-testid="stChatInput"] button:focus,
@@ -85,17 +84,21 @@ div[class*="st-key-asst_"] p { margin-bottom: 0.4rem; }
 [data-testid="stChatInput"] button:disabled {
     background: #fff !important; background-color: #fff !important;
     border: 1.5px solid #000 !important; border-radius: 8px !important;
+    color: #000 !important; opacity: 1 !important;
 }
-[data-testid="stChatInput"] button,
-[data-testid="stChatInput"] button * {
-    color: #000 !important; fill: #000 !important; opacity: 1 !important;
+[data-testid="stChatInput"] button svg { color: #000 !important; }
+[data-testid="stChatInput"] button svg path {
+    stroke: #000; stroke-width: 0.8px; stroke-linejoin: round;
 }
-[data-testid="stChatInput"] button svg { stroke: #000 !important; stroke-width: 2.6px !important; }
 [data-testid="stChatInput"] button span {
-    font-weight: 900 !important; -webkit-text-stroke: 0.9px #000;
+    color: #000 !important; font-weight: 700 !important;
+    font-variation-settings: 'wght' 700; -webkit-text-stroke: 0.4px #000;
 }
-[data-testid="stChatInput"] button:disabled, [data-testid="stChatInput"] button:disabled * {
-    color: #000 !important; fill: #000 !important; opacity: 1 !important;
+
+/* Calm focus outline (no red) */
+[data-testid="stChatInput"]:focus-within,
+[data-testid="stChatInput"] > div:focus-within {
+    border-color: var(--accent) !important; box-shadow: none !important;
 }
 
 /* Hide the footer / "Hosted with Streamlit" badge and keep the bottom area cream */
