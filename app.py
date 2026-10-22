@@ -35,6 +35,8 @@ st.markdown(
 }
 
 .stApp { background: var(--bg); color: var(--ink); }
+.stApp, .stApp p, .stApp li, .stApp label, .stApp textarea, .stApp input { font-weight: 500; }
+.stApp strong, .stApp b, .stApp h1, .stApp h2, .stApp h3 { font-weight: 700; }
 [data-testid="stHeader"] { background: transparent; }
 [data-testid="stSidebar"] { background: #F5F1E8; }
 .block-container { padding-top: 3.5rem; max-width: 760px; }
@@ -51,14 +53,14 @@ st.markdown(
     font-family: 'Lora', serif; font-weight: 700; font-size: 2rem;
     color: var(--ink); vertical-align: middle;
 }
-.mentor-sub { color: var(--muted); font-size: 0.82rem; margin-top: 0.5rem; }
+.mentor-sub { color: var(--muted); font-size: 0.82rem; font-weight: 500; margin-top: 0.5rem; }
 
 /* Your message: right side, terracotta bubble */
 .user-row { display: flex; justify-content: flex-end; margin: 6px 0 18px; }
 .user-bubble {
     background: var(--accent); color: #fff; padding: 10px 18px;
     border-radius: 16px 16px 0 16px; max-width: 80%;
-    font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap;
+    font-size: 0.95rem; font-weight: 600; line-height: 1.4; white-space: pre-wrap;
 }
 
 /* Mentor reply: left side, white card */
@@ -76,8 +78,10 @@ div[class*="st-key-asst_"] p { margin-bottom: 0.4rem; }
 [data-testid="stChatInput"] textarea { background: #F0F2F6; border-radius: 8px; }
 [data-testid="stChatInput"] button { border: 1px solid var(--line); background: #fff; }
 
-.empty-hint { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 1rem; }
-footer { visibility: hidden; }
+/* Hide the footer / "Hosted with Streamlit" badge and keep the bottom area cream */
+footer, [data-testid="stFooter"], [class*="viewerBadge"], [class*="_viewerBadge"],
+[class*="_profileContainer"], [class*="StatusWidget"] { display: none !important; visibility: hidden !important; }
+[data-testid="stBottom"], [data-testid="stBottom"] > div { background: var(--bg) !important; }
 </style>
 """,
     unsafe_allow_html=True,
@@ -211,25 +215,36 @@ agent.completed = completed_ids()
 # ---------- chat ----------
 for i, m in enumerate(st.session_state.messages):
     if m["role"] == "user":
-        render_user(m["content"])
+        render_user(m.get("display", m["content"]))
     else:
         with st.container(key=f"asst_{i}"):
             st.markdown(m["content"])
 
-if not st.session_state.messages:
-    st.markdown(
-        '<div class="empty-hint">Open the sidebar and press <b>Start next</b> to learn from the '
-        "very first step, or just ask anything below.</div>",
-        unsafe_allow_html=True,
-    )
+chat_value = st.chat_input(
+    "Ask your AI Engineer question...",
+    accept_file=True,  # shows the + button inside the prompt bar
+    file_type=["py", "txt", "sql", "csv", "md", "json"],
+)
 
-prompt = st.chat_input("Ask your AI Engineer question...")
+prompt, display = None, None
+if chat_value:
+    text = (chat_value["text"] or "").strip()
+    prompt, display = text, text
+    for f in chat_value["files"]:
+        try:
+            body = f.getvalue().decode("utf-8")[:20000]
+        except UnicodeDecodeError:
+            continue
+        prompt += f"\n\n[Attached file: {f.name}]\n```\n{body}\n```"
+        display += f"\n📎 {f.name}"
+    prompt, display = prompt.strip(), display.strip()
 if start_prompt:
     prompt = agent.lesson_request(start_prompt[1])
+    display = prompt
 
 if prompt:
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    render_user(prompt)
+    st.session_state.messages.append({"role": "user", "content": prompt, "display": display})
+    render_user(display)
 
     with st.container(key=f"asst_{len(st.session_state.messages)}"):
         try:
