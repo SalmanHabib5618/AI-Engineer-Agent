@@ -14,7 +14,7 @@ from ai_engineer_agent import (
 )
 
 st.set_page_config(
-    page_title="AI Mentor",
+    page_title=" Mentor",
     page_icon="🧭",
     layout="centered",
     initial_sidebar_state="collapsed",  # keeps the main page clean, like DS Mentor
@@ -77,7 +77,7 @@ div[class*="st-key-asst_"] p { margin-bottom: 0.4rem; }
 }
 [data-testid="stChatInput"] textarea { background: #F0F2F6; border-radius: 8px; }
 [data-testid="stChatInput"] button { border: 1px solid #CFC8BC; background: #fff; }
-/* + (upload) and send arrow: black, bold, white background */
+/* + (upload) and send arrow: black, white background */
 [data-testid="stChatInput"] button,
 [data-testid="stChatInput"] button:hover,
 [data-testid="stChatInput"] button:focus,
