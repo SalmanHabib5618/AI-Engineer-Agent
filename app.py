@@ -76,7 +76,19 @@ div[class*="st-key-asst_"] p { margin-bottom: 0.4rem; }
     background: #fff; border: 1px solid var(--line); border-radius: 10px;
 }
 [data-testid="stChatInput"] textarea { background: #F0F2F6; border-radius: 8px; }
-[data-testid="stChatInput"] button { border: 1px solid var(--line); background: #fff; }
+[data-testid="stChatInput"] button { border: 1px solid #CFC8BC; background: #fff; }
+/* + (upload) and send arrow: black and bold */
+[data-testid="stChatInput"] button,
+[data-testid="stChatInput"] button * {
+    color: #000 !important; fill: #000 !important; opacity: 1 !important;
+}
+[data-testid="stChatInput"] button svg { stroke: #000 !important; stroke-width: 2.6px !important; }
+[data-testid="stChatInput"] button span {
+    font-weight: 900 !important; -webkit-text-stroke: 0.9px #000;
+}
+[data-testid="stChatInput"] button:disabled, [data-testid="stChatInput"] button:disabled * {
+    color: #000 !important; fill: #000 !important; opacity: 1 !important;
+}
 
 /* Hide the footer / "Hosted with Streamlit" badge and keep the bottom area cream */
 footer, [data-testid="stFooter"], [class*="viewerBadge"], [class*="_viewerBadge"],
