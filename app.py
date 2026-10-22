@@ -45,7 +45,7 @@ st.markdown(
 .mentor-header { text-align: center; margin-bottom: 2.2rem; }
 .mentor-logo {
     width: 40px; height: 40px; border-radius: 50%;
-    border: 1.5px solid var(--accent);
+    border: 2.5px solid var(--accent);
     display: inline-flex; align-items: center; justify-content: center;
     vertical-align: middle; margin-right: 10px;
 }
@@ -199,9 +199,9 @@ st.markdown(
   <div>
     <span class="mentor-logo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B85410"
-           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-        <circle cx="7.5" cy="8" r="1.5"/><circle cx="16.5" cy="8" r="1.5"/>
-        <circle cx="12" cy="17" r="1.5"/>
+           stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="7.5" cy="8" r="1.8"/><circle cx="16.5" cy="8" r="1.8"/>
+        <circle cx="12" cy="17" r="1.8"/>
         <path d="M9 8h6M8.2 9.3l2.9 6.2M15.8 9.3l-2.9 6.2"/>
       </svg>
     </span><span class="mentor-title">Career Mentor</span>
