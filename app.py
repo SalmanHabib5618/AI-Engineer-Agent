@@ -1,7 +1,8 @@
-"""Streamlit interface for the AI Engineer Mentor Agent (powered by Groq).
+"""Streamlit interface for the AI Mentor Agent (powered by Groq).
 
 Teaches Python and PostgreSQL (SQL) from absolute zero.
 """
+import html
 import json
 import os
 
@@ -12,7 +13,75 @@ from ai_engineer_agent import (
     AgentError, AIEngineerAgent, make_client, next_lesson,
 )
 
-st.set_page_config(page_title="AI Engineer Mentor", page_icon="🧠", layout="centered")
+st.set_page_config(
+    page_title="AI Mentor",
+    page_icon="🧭",
+    layout="centered",
+    initial_sidebar_state="collapsed",  # keeps the main page clean, like DS Mentor
+)
+
+# ---------- look and feel: cream page, serif title, terracotta accent ----------
+st.markdown(
+    """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:wght@600;700&display=swap');
+
+:root {
+    --bg: #FCFAF6;
+    --accent: #B85410;
+    --ink: #2B2118;
+    --muted: #A89B8A;
+    --line: #E9E3D8;
+}
+
+.stApp { background: var(--bg); color: var(--ink); }
+[data-testid="stHeader"] { background: transparent; }
+[data-testid="stSidebar"] { background: #F5F1E8; }
+.block-container { padding-top: 3.5rem; max-width: 760px; }
+
+/* Header */
+.mentor-header { text-align: center; margin-bottom: 2.2rem; }
+.mentor-logo {
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1.5px solid var(--accent);
+    display: inline-flex; align-items: center; justify-content: center;
+    vertical-align: middle; margin-right: 10px;
+}
+.mentor-title {
+    font-family: 'Lora', serif; font-weight: 700; font-size: 2rem;
+    color: var(--ink); vertical-align: middle;
+}
+.mentor-sub { color: var(--muted); font-size: 0.82rem; margin-top: 0.5rem; }
+
+/* Your message: right side, terracotta bubble */
+.user-row { display: flex; justify-content: flex-end; margin: 6px 0 18px; }
+.user-bubble {
+    background: var(--accent); color: #fff; padding: 10px 18px;
+    border-radius: 16px 16px 0 16px; max-width: 80%;
+    font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap;
+}
+
+/* Mentor reply: left side, white card */
+div[class*="st-key-asst_"] {
+    background: #fff; border: 1px solid var(--line);
+    border-radius: 14px; padding: 12px 18px; max-width: 88%;
+    margin: 6px 0 18px;
+}
+div[class*="st-key-asst_"] p { margin-bottom: 0.4rem; }
+
+/* Chat box */
+[data-testid="stChatInput"] > div {
+    background: #fff; border: 1px solid var(--line); border-radius: 10px;
+}
+[data-testid="stChatInput"] textarea { background: #F0F2F6; border-radius: 8px; }
+[data-testid="stChatInput"] button { border: 1px solid var(--line); background: #fff; }
+
+.empty-hint { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 1rem; }
+footer { visibility: hidden; }
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 
 def get_api_key() -> str:
@@ -26,6 +95,13 @@ def get_api_key() -> str:
 
 def completed_ids() -> set:
     return {lid for lid in LESSONS if st.session_state.get(f"done_{lid}")}
+
+
+def render_user(text: str) -> None:
+    st.markdown(
+        f'<div class="user-row"><div class="user-bubble">{html.escape(text)}</div></div>',
+        unsafe_allow_html=True,
+    )
 
 
 # ---------- sidebar: settings ----------
@@ -89,15 +165,33 @@ with st.sidebar:
                "This app stores nothing on a server; closing the tab clears the chat, "
                "so save your progress file.")
 
+# ---------- header ----------
+st.markdown(
+    """
+<div class="mentor-header">
+  <div>
+    <span class="mentor-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B85410"
+           stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="7.5" cy="8" r="1.5"/><circle cx="16.5" cy="8" r="1.5"/>
+        <circle cx="12" cy="17" r="1.5"/>
+        <path d="M9 8h6M8.2 9.3l2.9 6.2M15.8 9.3l-2.9 6.2"/>
+      </svg>
+    </span><span class="mentor-title">AI Mentor</span>
+  </div>
+  <div class="mentor-sub">Your personal AI Engineer mentor — ask anything.</div>
+</div>
+""",
+    unsafe_allow_html=True,
+)
+
 # ---------- state ----------
 api_key = get_api_key()
-st.title("🧠 AI Engineer Mentor")
-st.caption("Learn Python and PostgreSQL from zero, one small step at a time. "
-           "It tells you when it does not know.")
 
 if not api_key:
     st.info("Add your Groq API key to continue. On Streamlit Cloud: App settings → Secrets → "
-            "`GROQ_API_KEY = \"gsk_...\"`. Locally: use the sidebar box or `.streamlit/secrets.toml`.")
+            "`GROQ_API_KEY = \"gsk_...\"`. Locally: open the sidebar and use the key box, "
+            "or add `.streamlit/secrets.toml`.")
     st.stop()
 
 if "agent" not in st.session_state:
@@ -115,25 +209,29 @@ agent.model, agent.level, agent.temperature = model, level, temperature
 agent.completed = completed_ids()
 
 # ---------- chat ----------
-for m in st.session_state.messages:
-    with st.chat_message(m["role"]):
-        st.markdown(m["content"])
+for i, m in enumerate(st.session_state.messages):
+    if m["role"] == "user":
+        render_user(m["content"])
+    else:
+        with st.container(key=f"asst_{i}"):
+            st.markdown(m["content"])
 
 if not st.session_state.messages:
-    st.markdown("**New here?** Press **Start next** in the sidebar and I'll teach you from the very "
-                "first step. Or ask anything, for example: `What is a variable?` · "
-                "`What is a database?` · `Why does this code fail?`")
+    st.markdown(
+        '<div class="empty-hint">Open the sidebar and press <b>Start next</b> to learn from the '
+        "very first step, or just ask anything below.</div>",
+        unsafe_allow_html=True,
+    )
 
-prompt = st.chat_input("Ask a question, or paste your code or output here")
+prompt = st.chat_input("Ask your AI Engineer question...")
 if start_prompt:
     prompt = agent.lesson_request(start_prompt[1])
 
 if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    render_user(prompt)
 
-    with st.chat_message("assistant"):
+    with st.container(key=f"asst_{len(st.session_state.messages)}"):
         try:
             reply = st.write_stream(agent.chat(prompt))
             st.session_state.messages.append({"role": "assistant", "content": reply})
