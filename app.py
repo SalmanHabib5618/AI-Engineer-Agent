@@ -1,4 +1,4 @@
-"""Streamlit interface for the AI Mentor Agent (powered by Groq).
+"""Streamlit interface for the Career Mentor Agent (powered by Groq).
 
 Teaches Python and PostgreSQL (SQL) from absolute zero.
 """
@@ -204,7 +204,7 @@ st.markdown(
         <circle cx="12" cy="17" r="1.5"/>
         <path d="M9 8h6M8.2 9.3l2.9 6.2M15.8 9.3l-2.9 6.2"/>
       </svg>
-    </span><span class="mentor-title">AI Mentor</span>
+    </span><span class="mentor-title">Career Mentor</span>
   </div>
   <div class="mentor-sub">Your personal AI Engineer mentor — ask anything.</div>
 </div>
