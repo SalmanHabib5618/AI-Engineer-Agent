@@ -1,4 +1,4 @@
-"""Streamlit interface for the Career Mentor Agent (powered by Groq).
+"""Streamlit interface for the Career Mentor Agent (powered by Groq or OpenAI).
 
 Teaches Python and PostgreSQL (SQL) from absolute zero.
 """
@@ -9,8 +9,8 @@ import os
 import streamlit as st
 
 from ai_engineer_agent import (
-    DEFAULT_MODEL, LEVELS, LESSONS, MODELS, ORDER,
-    AgentError, AIEngineerAgent, make_client, next_lesson,
+    DEFAULT_MODEL, LEVELS, LESSONS, MODELS, ORDER, PROVIDER_NAMES,
+    AgentError, AIEngineerAgent, make_client, next_lesson, provider_of,
 )
 
 st.set_page_config(
@@ -111,13 +111,14 @@ footer, [data-testid="stFooter"], [class*="viewerBadge"], [class*="_viewerBadge"
 )
 
 
-def get_api_key() -> str:
+def get_api_key(provider: str = "groq") -> str:
     """Secrets first (Streamlit Cloud), then environment, then the sidebar box."""
+    name = "OPENAI_API_KEY" if provider == "openai" else "GROQ_API_KEY"
     try:
-        key = st.secrets.get("GROQ_API_KEY", "")
+        key = st.secrets.get(name, "")
     except Exception:  # no secrets file locally
         key = ""
-    return key or os.environ.get("GROQ_API_KEY", "") or st.session_state.get("typed_key", "")
+    return key or os.environ.get(name, "") or st.session_state.get(f"typed_key_{provider}", "")
 
 
 def completed_ids() -> set:
@@ -138,8 +139,10 @@ with st.sidebar:
     level = st.selectbox("Explanation level", list(LEVELS), index=0)
     temperature = st.slider("Creativity", 0.0, 1.0, 0.4, 0.1)
 
-    if not get_api_key():
-        st.text_input("Groq API key", type="password", key="typed_key",
+    provider = provider_of(model)
+    pname = PROVIDER_NAMES[provider]
+    if not get_api_key(provider):
+        st.text_input(f"{pname} API key", type="password", key=f"typed_key_{provider}",
                       help="Only kept for this browser session. On Streamlit Cloud, use Secrets instead.")
 
     if st.button("New conversation", use_container_width=True):
@@ -188,7 +191,7 @@ with st.sidebar:
     st.download_button("Save progress", json.dumps({"completed": sorted(completed_ids())}, indent=2),
                        "mentor_progress.json", "application/json", use_container_width=True)
 
-    st.caption("Your messages are sent to Groq to generate replies. "
+    st.caption(f"Your messages are sent to {pname} to generate replies. "
                "This app stores nothing on a server; closing the tab clears the chat, "
                "so save your progress file.")
 
@@ -213,17 +216,18 @@ st.markdown(
 )
 
 # ---------- state ----------
-api_key = get_api_key()
+api_key = get_api_key(provider)
 
 if not api_key:
-    st.info("Add your Groq API key to continue. On Streamlit Cloud: App settings → Secrets → "
-            "`GROQ_API_KEY = \"gsk_...\"`. Locally: open the sidebar and use the key box, "
-            "or add `.streamlit/secrets.toml`.")
+    secret_name = "OPENAI_API_KEY" if provider == "openai" else "GROQ_API_KEY"
+    st.info(f"Add your {pname} API key to continue. On Streamlit Cloud: App settings → Secrets → "
+            f"`{secret_name} = \"...\"`. Locally: open the sidebar and use the key box, "
+            "or add `.streamlit/secrets.toml`. You can also pick a different model in the sidebar.")
     st.stop()
 
 if "agent" not in st.session_state:
     try:
-        st.session_state.agent = AIEngineerAgent(make_client(api_key), model, level, temperature)
+        st.session_state.agent = AIEngineerAgent(make_client(api_key, provider), model, level, temperature)
     except AgentError as e:
         st.error(str(e))
         st.stop()
@@ -231,7 +235,7 @@ if "agent" not in st.session_state:
 
 agent: AIEngineerAgent = st.session_state.agent
 # apply sidebar changes to the live agent
-agent.client = make_client(api_key)
+agent.client = make_client(api_key, provider)
 agent.model, agent.level, agent.temperature = model, level, temperature
 agent.completed = completed_ids()
 
