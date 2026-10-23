@@ -9,7 +9,7 @@ import os
 import streamlit as st
 
 from ai_engineer_agent import (
-    DEFAULT_MODEL, LEVELS, LESSONS, MODELS, ORDER, PROVIDER_NAMES,
+    DEFAULT_MODEL, LEVELS, LESSONS, MODELS, ORDER, PROVIDER_NAMES, MODEL_LABELS,
     AgentError, AIEngineerAgent, make_client, next_lesson, provider_of,
 )
 
@@ -135,7 +135,8 @@ def render_user(text: str) -> None:
 # ---------- sidebar: settings ----------
 with st.sidebar:
     st.header("Settings")
-    model = st.selectbox("Model", MODELS, index=MODELS.index(DEFAULT_MODEL))
+    model = st.selectbox("Model", MODELS, index=MODELS.index(DEFAULT_MODEL),
+                        format_func=lambda m: MODEL_LABELS.get(m, m))
     level = st.selectbox("Explanation level", list(LEVELS), index=0)
     temperature = st.slider("Creativity", 0.0, 1.0, 0.4, 0.1)
 
