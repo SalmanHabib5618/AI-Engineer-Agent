@@ -13,7 +13,25 @@ from typing import Iterable, Iterator
 
 CONSENT_MARKER = "[[NEEDS_CONSENT]]"
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
-GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+# Groq models with a free tier (no card needed). Limits are per model and change over time:
+# check console.groq.com/docs/rate-limits. Order = what shows first in the sidebar.
+GROQ_MODELS = [
+    "llama-3.3-70b-versatile",
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "llama-3.1-8b-instant",
+]
+MODEL_LABELS = {
+    "llama-3.3-70b-versatile": "Llama 3.3 70B (Groq, free)",
+    "openai/gpt-oss-120b": "GPT-OSS 120B (Groq, free)",
+    "openai/gpt-oss-20b": "GPT-OSS 20B (Groq, free)",
+    "meta-llama/llama-4-scout-17b-16e-instruct": "Llama 4 Scout (Groq, free)",
+    "llama-3.1-8b-instant": "Llama 3.1 8B fast (Groq, free)",
+    "gpt-4.1-mini": "GPT-4.1 mini (OpenAI, paid)",
+    "gpt-4o-mini": "GPT-4o mini (OpenAI, paid)",
+    "gpt-5-mini": "GPT-5 mini (OpenAI, paid)",
+}
 # OpenAI GPT models (need an OpenAI API key). Check platform.openai.com/docs/models for current names.
 OPENAI_MODELS = ["gpt-4.1-mini", "gpt-4o-mini", "gpt-5-mini"]
 MODELS = GROQ_MODELS + OPENAI_MODELS
@@ -22,12 +40,12 @@ PROVIDER_NAMES = {"groq": "Groq", "openai": "OpenAI"}
 
 def provider_of(model: str) -> str:
     """'openai' for GPT models, otherwise 'groq'."""
-    return "openai" if model in OPENAI_MODELS or model.startswith(("gpt-", "o1", "o3", "o4")) else "groq"
+    return "openai" if model in OPENAI_MODELS else "groq"
 
 
 def _fixed_temperature(model: str) -> bool:
     """GPT-5 and o-series models only accept the default temperature, so we do not send one."""
-    return model.startswith(("gpt-5", "o1", "o3", "o4"))
+    return model in OPENAI_MODELS and model.startswith(("gpt-5", "o1", "o3", "o4"))
 MAX_HISTORY_MESSAGES = 14  # keeps requests small and fast
 
 # ---------------------------------------------------------------------------
