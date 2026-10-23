@@ -13,7 +13,21 @@ from typing import Iterable, Iterator
 
 CONSENT_MARKER = "[[NEEDS_CONSENT]]"
 DEFAULT_MODEL = "llama-3.3-70b-versatile"
-MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]
+# OpenAI GPT models (need an OpenAI API key). Check platform.openai.com/docs/models for current names.
+OPENAI_MODELS = ["gpt-4.1-mini", "gpt-4o-mini", "gpt-5-mini"]
+MODELS = GROQ_MODELS + OPENAI_MODELS
+PROVIDER_NAMES = {"groq": "Groq", "openai": "OpenAI"}
+
+
+def provider_of(model: str) -> str:
+    """'openai' for GPT models, otherwise 'groq'."""
+    return "openai" if model in OPENAI_MODELS or model.startswith(("gpt-", "o1", "o3", "o4")) else "groq"
+
+
+def _fixed_temperature(model: str) -> bool:
+    """GPT-5 and o-series models only accept the default temperature, so we do not send one."""
+    return model.startswith(("gpt-5", "o1", "o3", "o4"))
 MAX_HISTORY_MESSAGES = 14  # keeps requests small and fast
 
 # ---------------------------------------------------------------------------
@@ -197,7 +211,13 @@ def classify_consent_reply(text: str) -> str:
     return "new"  # a longer message is treated as a new request
 
 
-def make_client(api_key: str):
+def make_client(api_key: str, provider: str = "groq"):
+    if provider == "openai":
+        try:
+            from openai import OpenAI
+        except ImportError as e:  # pragma: no cover
+            raise AgentError("The 'openai' package is not installed. Add it to requirements.txt.") from e
+        return OpenAI(api_key=api_key)
     try:
         from groq import Groq
     except ImportError as e:  # pragma: no cover
@@ -293,8 +313,10 @@ class AIEngineerAgent:
 
     def _stream(self, messages: list[dict]) -> Iterator[str]:
         try:
-            stream = self.client.chat.completions.create(
-                model=self.model, messages=messages, temperature=self.temperature, stream=True)
+            kwargs = {"model": self.model, "messages": messages, "stream": True}
+            if not _fixed_temperature(self.model):
+                kwargs["temperature"] = self.temperature
+            stream = self.client.chat.completions.create(**kwargs)
             for chunk in stream:
                 delta = chunk.choices[0].delta.content if chunk.choices else None
                 if delta:
@@ -302,7 +324,7 @@ class AIEngineerAgent:
         except AgentError:
             raise
         except Exception as e:  # map provider errors to friendly messages
-            raise AgentError(_friendly_error(e)) from e
+            raise AgentError(_friendly_error(e, provider_of(self.model))) from e
 
     @staticmethod
     def _hide_marker(chunks: Iterable[str], sink: list[str]) -> Iterator[str]:
@@ -318,15 +340,22 @@ class AIEngineerAgent:
         yield buf.replace(CONSENT_MARKER, "").rstrip()
 
 
-def _friendly_error(e: Exception) -> str:
+def _friendly_error(e: Exception, provider: str = "groq") -> str:
     name = type(e).__name__
     text = str(e)
+    pname = PROVIDER_NAMES.get(provider, "The provider")
+    key_name = "OPENAI_API_KEY" if provider == "openai" else "GROQ_API_KEY"
+    other = "another model" if provider == "openai" else "the smaller model"
     if name == "AuthenticationError" or "401" in text:
-        return "Groq rejected the API key. Check GROQ_API_KEY in your secrets."
+        return f"{pname} rejected the API key. Check {key_name} in your secrets."
+    if "insufficient_quota" in text or "exceeded your current quota" in text.lower():
+        return (f"{pname} says there is no credit left on this key. "
+                "Add billing or credit on your OpenAI account, or switch to a Groq model.")
     if name == "RateLimitError" or "429" in text:
-        return "Groq rate limit reached. Wait a minute, or switch to the smaller model in the sidebar."
+        return f"{pname} rate limit reached. Wait a minute, or switch to {other} in the sidebar."
     if name in ("APIConnectionError", "APITimeoutError"):
-        return "Could not reach Groq. Check your internet connection and try again."
-    if "model" in text.lower() and ("not found" in text.lower() or "decommission" in text.lower()):
-        return "That model is not available on Groq any more. Pick another model in the sidebar."
-    return f"Groq returned an error ({name}). Please try again. Details: {text[:200]}"
+        return f"Could not reach {pname}. Check your internet connection and try again."
+    if "model" in text.lower() and ("not found" in text.lower() or "decommission" in text.lower()
+                                    or "does not exist" in text.lower()):
+        return f"That model is not available on {pname} (for this key). Pick another model in the sidebar."
+    return f"{pname} returned an error ({name}). Please try again. Details: {text[:200]}"
